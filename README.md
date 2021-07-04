@@ -1,7 +1,7 @@
 # BloxPC2
 PC Components emulator for roblox engine
 
-# Bandled
+# Bundled
 The project includes:
 * Standard CPU code, capable of parsing own made language called BloxScript (SPED) which is similar to assembly language
 * BIOS Code, capable of booting the entire assembled PC
