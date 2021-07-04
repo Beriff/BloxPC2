@@ -31,7 +31,7 @@ CPU_CALL.REGISTERS.INTERNAL_REGISTERS = {}
 
 CPU_CALL.REGISTERS.INTERNAL_REGISTERS.IR = {} --| Instruction Register
 CPU_CALL.REGISTERS.INTERNAL_REGISTERS.MBR = {} --| RAM Fetching Register
-CPU_CALL.REGISTERS.INTERNAL_REGISTERS.MAR = {} --| RAM Fetching Adress Register
+CPU_CALL.REGISTERS.INTERNAL_REGISTERS.MAR = {} --| RAM Fetching Address Register
 
 -- // UA Registers
 CPU_CALL.REGISTERS.USER_REGISTERS = {}
@@ -56,6 +56,29 @@ function CPU_CALL.Core:New(obj)
 	obj = obj or {}
 	setmetatable(obj, self)
 	return obj
+end
+
+function CPU_CALL.SendSignal(data)
+	--TODO signals
+end
+
+function CPU_CALL:Interrupt(interrupt_code)
+	local intr_code = tonumber(interrupt_code)
+	if intr_code then
+		if intr_code == 1 then -- put at cursor
+			CPU_CALL:SendSignal("HEADER: GPU PCAC".."CONTENT "..CPU_CALL.REGISTERS.USER_REGISTERS.D4)
+		elseif intr_code == 2 then -- get char at cursor, put to D4
+			CPU_CALL:SendSignal("HEADER: GPU GCAC".."CONTENT "..CPU_CALL.REGISTERS.USER_REGISTERS.D4)
+		elseif intr_code == 3 then -- move to HDD sector
+			CPU_CALL:SendSignal("HEADER: DRIVE MTS".."CONTENT "..CPU_CALL.REGISTERS.USER_REGISTERS.D4)
+		elseif intr_code == 4 then -- move to HDD line of current sector
+			CPU_CALL:SendSignal("HEADER: DRIVE MTL".."CONTENT "..CPU_CALL.REGISTERS.USER_REGISTERS.D4)
+		elseif intr_code == 5 then -- write to HDD
+			CPU_CALL:SendSignal("HEADER: DRIVE WRD".."CONTENT "..CPU_CALL.REGISTERS.USER_REGISTERS.D4)
+		elseif intr_code == 6 then -- get at HDD
+			CPU_CALL:SendSignal("HEADER: DRIVE GAP".."CONTENT "..CPU_CALL.REGISTERS.USER_REGISTERS.D4)
+		end
+	end
 end
 
 function CPU_CALL.Core:Execute(Data) -- Execute machine code of BPSS2 standard
@@ -251,6 +274,18 @@ function CPU_CALL.Core:Execute(Data) -- Execute machine code of BPSS2 standard
 							index = k
 						end
 					end
+				end
+			elseif data_tokens[CPU_CALL.REGISTERS.INTERNAL_REGISTERS.IR[0]] == "intr" then
+				CPU_CALL.REGISTERS.INTERNAL_REGISTERS.IR[0] = CPU_CALL.REGISTERS.INTERNAL_REGISTERS.IR[0] + 1
+				local interrupt = tonumber(data_tokens[CPU_CALL.REGISTERS.INTERNAL_REGISTERS.IR[0]])
+				if interrupt == 0 or interrupt then
+					if interrupt == 0 then
+						return true
+					else
+						CPU_CALL:Interrupt(interrupt)
+					end
+				else
+					return false
 				end
 			end
 		else
